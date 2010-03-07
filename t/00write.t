@@ -36,13 +36,6 @@ is $orig_config, $config                         => 'Content correct';
 
 
 __DATA__
-[Complex named!!!]
-
-%^$%$#%: curses
-
-123456789: zero
-
-[]
 
 def 2: def val 2
 
@@ -51,6 +44,12 @@ def 3 ml: def val 3
         :    lines
 
 def1: def val 1
+
+[Complex named!!!]
+
+%^$%$#%: curses
+
+123456789: zero
 
 [Named]
 

@@ -1,14 +1,23 @@
 package Config::Std;
 
-use version; $VERSION = qv('0.0.2');
+use version; $VERSION = qv('0.0.3');
+
+my %global_def_sep;
 
 sub import {
-    *{caller().'::read_config'}  = \&Config::Std::Hash::read_config;
-    *{caller().'::write_config'} = \&Config::Std::Hash::write_config;
+    my ($package, $opt_ref) = @_;
+    my $caller = caller();
+    $global_def_sep{$caller} = $opt_ref->{def_sep};
+    for my $sub_name (qw( read_config write_config )) {
+        $opt_ref->{$sub_name} ||= $sub_name;
+    }
+    *{$caller.'::'.$opt_ref->{read_config}}  = \&Config::Std::Hash::read_config;
+    *{$caller.'::'.$opt_ref->{write_config}} = \&Config::Std::Hash::write_config;
 }
 
 package Config::Std::Gap;
 use Class::Std;
+### [caller 0]
 {
     sub serialize { return "\n" }
     sub update  {}
@@ -28,7 +37,7 @@ use Class::Std;
 
     sub append_comment {
         my ($self, $new_text) = @_;
-        $text_of{indent $self} .= $new_text;
+        $text_of{ident $self} .= $new_text;
     }
 
     sub update  {}
@@ -54,7 +63,7 @@ use Class::Std;
     use Carp;
 
     sub serialize {
-        my ($self, $def_sep) = @_;
+        my ($self, $def_sep, $block_name) = @_;
         my $ident = ident $self;
 
         return "" if $deleted_of{$ident};
@@ -69,7 +78,7 @@ use Class::Std;
             my ($val,$sep,$comm) = @{$vals->[$n]}{qw(val sep comm)};
 
             my $val_type = ref $val;
-            croak qq{Can't save $val_type value for key '$key' (only scalars or arrays)}
+            croak qq{Can't save \L$val_type\E ref as value for key {'$block_name'}{'$key'} (only scalars or array refs)}
                 if $val_type && $val_type ne 'ARRAY';
 
             $sep = $SEPARATOR{$sep || $def_sep};
@@ -154,7 +163,7 @@ use Class::Std;
     }
 
     sub serialize {
-        my ($self, $first) = @_;
+        my ($self, $first, $caller, $post_gap) = @_;
         my $ident = ident $self;
 
         return q{} if $deleted_of{$ident};
@@ -169,13 +178,17 @@ use Class::Std;
                            . "\n";
         }
 
+        my $gds = $global_def_sep{$caller};
         my $def_sep
-            = $sep_count_of{$ident}{':'} >= $sep_count_of{$ident}{'='} ? ':' : '=';
+            = defined $gds                                             ? $gds
+            : $sep_count_of{$ident}{':'} >= $sep_count_of{$ident}{'='} ? ':'
+            :                                                            '='
+            ;
 
-        $self->ensure_gap() unless $is_anon;
+        $self->ensure_gap() if !$is_anon;
 
         for my $comp ( @{$components_of{$ident}} ) {
-            $serialization .= $comp->serialize($def_sep);
+            $serialization .= $comp->serialize($def_sep, $name_of{$ident});
         }
 
         return $serialization;
@@ -196,13 +209,14 @@ use Class::Std;
     }
 
     sub extend {
-        my ($self, $hash_ref, $updated_ref) = @_;
+        my ($self, $hash_ref, $updated_ref, $post_gap) = @_;
 
         # Only the first occurrence of a block has new keys added...
         return unless $is_first{ident $self};
 
+        my $first = 1;
         for my $key ( grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
-            $self->ensure_gap();
+            $self->ensure_gap() if !$first++ || $post_gap;
             $self->add_keyval($key, undef, $hash_ref->{$key});
         }
     }
@@ -256,16 +270,20 @@ use Class::Std;
     use Carp;
     use Fcntl ':flock';     # import LOCK_* constants
 
-    my %array_rep_for :ATTR;
-    my %filename_for  :ATTR;
+    my %post_section_gap_for :ATTR;
+    my %array_rep_for        :ATTR;
+    my %filename_for         :ATTR;
 
     sub write_config (\[%$];$) {
         my ($hash_ref, $filename) = @_;
+        $hash_ref = ${$hash_ref} if ref $hash_ref eq 'REF';
 
         $filename = $filename_for{$hash_ref} if @_<2;
 
         croak "Missing filename for call to write_config()"
             unless $filename;
+
+        my $post_gap = ($post_section_gap_for{$hash_ref} || 0) >= 0;
 
         # Update existing keyvals in each block...
         my %updated;
@@ -277,15 +295,19 @@ use Class::Std;
         # Add new keyvals to the first section of block...
         for my $block ( @{$array_rep_for{$hash_ref}} ) {
             my $block_name = $block->get_name();
-            $block->extend($hash_ref->{$block_name}, $updated{$block_name});
+            $block->extend($hash_ref->{$block_name}, $updated{$block_name}, $post_gap);
         }
 
         # Add new blocks at the end...
-        for my $block_name ( grep {!$updated{$_}} keys %{$hash_ref} ) {
+        for my $block_name ( sort grep {!$updated{$_}} keys %{$hash_ref} ) {
             my $block = Config::Std::Block->new({name=>$block_name});
             my $subhash = $hash_ref->{$block_name};
+            my $first = 1;
             for my $key ( keys %{$subhash} ) {
-                $block->ensure_gap();
+                if (!defined $subhash->{$key}) {
+                    croak "Can't save undefined value for key {'$block_name'}{'$key'} (only scalars or array refs)";
+                }
+                $block->ensure_gap() if !$first++ || $post_gap;
                 $block->add_keyval($key, undef, $subhash->{$key});
                 $block->add_gap();
             }
@@ -301,7 +323,7 @@ use Class::Std;
 
         my $first = 1;
         for my $block ( @{$array_rep_for{$hash_ref}} ) {
-            print {$fh} $block->serialize($first);
+            print {$fh} $block->serialize($first, scalar caller, $post_gap);
             $first = 0;
         }
 
@@ -326,13 +348,19 @@ use Class::Std;
 
         bless $hash_ref, 'Config::Std::Hash';
 
-        my $blocks = $array_rep_for{$hash_ref} = _load_config_for($filename);
+        my $blocks = $array_rep_for{$hash_ref}
+                   = _load_config_for($filename, $hash_ref);
 
         for my $block ( @{$blocks} ) {
             $block->copy_to($hash_ref);
         }
 
         $filename_for{$hash_ref} = $filename;
+
+        # Remove initial empty section if no data...
+        if (!keys %{ $hash_ref->{q{}} }) {
+            delete $hash_ref->{q{}};
+        }
 
         return 1;
     }
@@ -352,7 +380,9 @@ use Class::Std;
         my $comment = q{};
         my %seen;
 
-        # use Smart::Comments;
+        # Start tracking whether section markers have gaps after them...
+        $post_section_gap_for{$hash_ref} = 0;
+
         for ($text) {
             pos = 0;
             while (pos() < length() ) {
@@ -388,6 +418,10 @@ use Class::Std;
                                 first   => !$seen{$name}++,
                             });
                     $comment = q{};
+
+                    # Check for trailing gap...
+                    $post_section_gap_for{$hash_ref}
+                        += m/\G (?= [^\S\n]* (?:\n|\z) )/xms ? +1 : -1;
                 }
 
                 # Key/value...
@@ -438,7 +472,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.0.2
+This document describes Config::Std version 0.0.3
 
 
 =head1 SYNOPSIS
@@ -478,12 +512,19 @@ The configuration language is a slight extension of the Windows INI format.
 
 =head3 Comments
 
-Comments can be placed almost anywhere in a configuration file, except inside
-a section label, or between the key and value of a configuration variable.
-
 A comment starts with a C<#> character and runs to the end of the same line:
 
     # This is a comment
+
+Comments can be placed almost anywhere in a configuration file, except inside
+a section label, or in the key or value of a configuration variable:
+
+    # Valid comment
+    [ # Not a comment, just a weird section label ]
+
+    # Valid comment
+    key: value  # Not a comment, just part of the value
+
 
 =head3 Sections
 
@@ -543,6 +584,13 @@ like so:
 Both types of separators can be used in the same file, but neither can
 be used as part of a key. Newlines are not allowed in keys either.
 
+When writing out a config file, Config::Std tries to preserve whichever
+separator was used in the original data (if that data was read
+in). New data is written back with a colon as its default separator,
+unless you specify otherwise when the module is loaded:
+
+    use Config::Std { def_sep => '=' };
+
 Everything from the first non-whitespace character after the separator,
 up to the end of the line, is treated as the value for the config variable.
 So all of the above examples define the same three values: C<'George'>,
@@ -550,6 +598,30 @@ C<'47'>, and C<'185'>.
 
 In other words, any whitespace immediately surrounding the separator
 character is part of the separator, not part of the key or value.
+
+Note that you can't put a comment on the same line as a configuration
+variable. The C<# etc.> is simply considered part of the value:
+
+    [Delimiters]
+
+    block delims:    { }
+    string delims:   " "
+    comment delims:  # \n
+
+You can comment a config var on the preceding or succeeding line:
+
+    [Delimiters]
+
+    # Use braces to delimit blocks...
+    block delims:    { }
+
+    # Use double quotes to delimit strings
+
+    string delims:   " "
+
+    # Use octothorpe/newline to delimit comments
+    comment delims:  # \n
+    
 
 =head3 Multi-line configuration values
 
@@ -574,7 +646,9 @@ previous example had been:
            :   Springfield
            :     USA
 
-then the value would be: C<S<"742 Evergreen Terrace\n  Springfield\n    USA">>
+then the value would be:
+
+    "742 Evergreen Terrace\n  Springfield\n    USA"
 
 If a continuation line has less leading whitespace that the first line:
 
@@ -583,7 +657,8 @@ If a continuation line has less leading whitespace that the first line:
            : USA
 
 it's treated as having no leading whitespace:
-C<S<"742 Evergreen Terrace\nSpringfield\nUSA">>
+
+    "742 Evergreen Terrace\nSpringfield\nUSA"
 
 
 =head3 Multi-part configuration values
@@ -722,6 +797,21 @@ The subroutine returns true on success and throws and exception on failure.
 
 =back
 
+If necessary (typically to avoid conflicts with other modules), you can
+have the module export its two subroutines with different names by
+loading it with the appropriate options:
+
+    use Config::Std { read_config => 'get_ini', write_config => 'update_ini' };
+
+    # and later...
+
+    get_ini($filename => %config_hash);
+
+    # and later still...
+
+    update_ini(%config_hash);
+
+
 =head1 DIAGNOSTICS
 
 =over 
@@ -745,14 +835,14 @@ was supposed to load a configuration file, but that variable already had
 a defined value, so C<read_config()> couldn't autovivify a new hash for
 you. Did you mean to pass the subroutine a hash instead of a scalar?
 
-=item Can't save %s value for key '%s' (only scalars or arrays)
+=item Can't save %s value for key '%s' (only scalars or array refs)
 
 You called C<write_config> and passed it a hash containing a
-configuaryion variable whose value wasn't a single string, or a list of
+configuration variable whose value wasn't a single string, or a list of
 strings. The configuration file format supported by this module only
 supports those two data types as values. If you really need to store
 other kinds of data in a configuration file, you should consider using
-C<Data::Dumper> or C<YAML> instead?
+C<Data::Dumper> or C<YAML> instead.
 
 =item Missing filename in call to write_config()
 

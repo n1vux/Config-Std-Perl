@@ -11,3 +11,8 @@ t/01read.t
 t/02rewrite.t
 t/pod-coverage.t
 t/pod.t
+t/01read_renamed.t
+t/02rewrite_eq.t
+t/03autoviv.t
+t/comments.t
+t/undef.t
