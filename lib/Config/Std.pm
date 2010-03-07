@@ -1,6 +1,6 @@
 package Config::Std;
 
-use version; $VERSION = qv('0.0.3');
+use version; $VERSION = qv('0.0.4');
 
 my %global_def_sep;
 
@@ -472,7 +472,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.0.3
+This document describes Config::Std version 0.0.4
 
 
 =head1 SYNOPSIS

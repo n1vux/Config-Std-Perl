@@ -28,3 +28,8 @@ Revision history for Config-Std
 
     - Added mechanism to allow read_config() and write_config() to be renamed
       when exported (thanks David)
+
+
+0.0.4  Mon Feb 20 08:03:45 2006
+
+    - Removed spurious dependency on Smart::Comments

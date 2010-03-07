@@ -1,6 +1,5 @@
 use Test::More 'no_plan';
 use Config::Std;
-use Smart::Comments;
 
 my $orig_contents = <<EOF;
 [section2]
