@@ -21,7 +21,7 @@ Revision history for Config-Std
 
     - Removed unused "" sections from read_config hash (thanks carcassonne)
 
-    - Added logic to decide whether new sections has spaces after them
+    - Added logic to decide whether new sections have spaces after them
 
     - Changed write_config() behaviour for undefined hash entries: they now
       throw an exception (thanks David)
@@ -33,3 +33,18 @@ Revision history for Config-Std
 0.0.4  Mon Feb 20 08:03:45 2006
 
     - Removed spurious dependency on Smart::Comments
+
+
+
+0.0.5  Tue Sep 22 15:17:49 2009
+
+    - Made spacing between key/values more intelligent
+
+    - Added def_sep option to control that intelligence (thanks David)
+
+    - Added support for standard INI-style comments:   ; like this
+      (thanks William and FSD)
+
+    - Fixed bug in section heading parsing (thanks Kirk)
+
+

@@ -1,13 +1,15 @@
 package Config::Std;
 
-use version; $VERSION = qv('0.0.4');
+use version; our $VERSION = qv('0.0.5');
 
 my %global_def_sep;
+my %global_inter_gap;
 
 sub import {
     my ($package, $opt_ref) = @_;
     my $caller = caller();
     $global_def_sep{$caller} = $opt_ref->{def_sep};
+    $global_inter_gap{$caller} = $opt_ref->{def_gap};
     for my $sub_name (qw( read_config write_config )) {
         $opt_ref->{$sub_name} ||= $sub_name;
     }
@@ -17,7 +19,6 @@ sub import {
 
 package Config::Std::Gap;
 use Class::Std;
-### [caller 0]
 {
     sub serialize { return "\n" }
     sub update  {}
@@ -163,7 +164,7 @@ use Class::Std;
     }
 
     sub serialize {
-        my ($self, $first, $caller, $post_gap) = @_;
+        my ($self, $first, $caller, $post_gap, $inter_gap) = @_;
         my $ident = ident $self;
 
         return q{} if $deleted_of{$ident};
@@ -185,7 +186,7 @@ use Class::Std;
             :                                                            '='
             ;
 
-        $self->ensure_gap() if !$is_anon;
+        $self->ensure_gap() if $inter_gap && !$is_anon;
 
         for my $comp ( @{$components_of{$ident}} ) {
             $serialization .= $comp->serialize($def_sep, $name_of{$ident});
@@ -209,15 +210,19 @@ use Class::Std;
     }
 
     sub extend {
-        my ($self, $hash_ref, $updated_ref, $post_gap) = @_;
+        my ($self, $hash_ref, $updated_ref, $post_gap, $inter_gap) = @_;
 
         # Only the first occurrence of a block has new keys added...
         return unless $is_first{ident $self};
 
         my $first = 1;
         for my $key ( grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
-            $self->ensure_gap() if !$first++ || $post_gap;
+            my $separate = ref $value || $value =~ m/\n./xms;
+            $block->ensure_gap() if ($first ? $post_gap : $inter_gap)
+                                    || $separate;
             $self->add_keyval($key, undef, $hash_ref->{$key});
+            $block->add_gap() if $separate;
+            $first = 0;
         }
     }
 
@@ -283,7 +288,16 @@ use Class::Std;
         croak "Missing filename for call to write_config()"
             unless $filename;
 
-        my $post_gap = ($post_section_gap_for{$hash_ref} || 0) >= 0;
+        my $caller = caller;
+
+        my $inter_gap
+            = exists $global_inter_gap{$caller} ? $global_inter_gap{$caller}
+            :                                      1;
+        my $post_gap
+            = $post_section_gap_for{$hash_ref}
+            || (defined $global_inter_gap{$caller} ? $global_inter_gap{$caller}
+                                                   : 1
+               );
 
         # Update existing keyvals in each block...
         my %updated;
@@ -295,7 +309,9 @@ use Class::Std;
         # Add new keyvals to the first section of block...
         for my $block ( @{$array_rep_for{$hash_ref}} ) {
             my $block_name = $block->get_name();
-            $block->extend($hash_ref->{$block_name}, $updated{$block_name}, $post_gap);
+            $block->extend($hash_ref->{$block_name}, $updated{$block_name},
+                           $post_gap, inter_gap
+                          );
         }
 
         # Add new blocks at the end...
@@ -307,10 +323,15 @@ use Class::Std;
                 if (!defined $subhash->{$key}) {
                     croak "Can't save undefined value for key {'$block_name'}{'$key'} (only scalars or array refs)";
                 }
-                $block->ensure_gap() if !$first++ || $post_gap;
-                $block->add_keyval($key, undef, $subhash->{$key});
-                $block->add_gap();
+                my $value = $subhash->{$key};
+                my $separate = ref $value || $value =~ m/\n./xms;
+                $block->ensure_gap() if ($first ? $post_gap : $inter_gap)
+                                     || $separate;
+                $block->add_keyval($key, undef, $value);
+                $block->add_gap() if $separate;
+                $first = 0;
             }
+            $block->ensure_gap();
             push @{$array_rep_for{$hash_ref}}, $block;
         }
 
@@ -395,13 +416,13 @@ use Class::Std;
                 }
 
                 # Comment...
-                elsif (m/\G (\s* [#] [^\n]* (?:\n|\z) )/gcxms) {
+                elsif (m/\G (\s* [#;] [^\n]* (?:\n|\z) )/gcxms) {
                     ### Found comment: $1
                     $comment .= $1;
                 }
 
                 # Block...
-                elsif (m/\G ([^\S\n]*) [[]  ( [^]\n]* ) []] ( ([^\S\n]*) [#] [^\n]* )? (?:\n|\z)/gcxms) {
+                elsif (m/\G ([^\S\n]*) [[]  ( [^]\n]* ) []] ( ([^\S\n]*) [#;] [^\n]* )? [^\S\n]* (?:\n|\z)/gcxms) {
                     my ($pre, $name, $parcomm, $ws) = ($1, $2, $3, $4);
                     ### Found block: $name
                     if ($parcomm) {
@@ -444,9 +465,8 @@ use Class::Std;
 
                     ### Found kv: $key, $val
 
-                    $config_file[-1]->add_keyval($key, $pure_sep, $val, $comment);
-                    $comment = q{};
-                }
+                    $config_file[-1]->add_keyval($key, $pure_sep, $val,
+                    $comment); $comment = q{}; }
 
                 # Mystery...
                 else {
@@ -472,7 +492,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.0.4
+This document describes Config::Std version 0.0.5
 
 
 =head1 SYNOPSIS
@@ -512,9 +532,12 @@ The configuration language is a slight extension of the Windows INI format.
 
 =head3 Comments
 
-A comment starts with a C<#> character and runs to the end of the same line:
+A comment starts with a C<#> character (Perl-style) or a C<;> character
+(INI-style), and runs to the end of the same line:
 
     # This is a comment
+
+    ; Ywis, eke hight thilke
 
 Comments can be placed almost anywhere in a configuration file, except inside
 a section label, or in the key or value of a configuration variable:
@@ -522,8 +545,8 @@ a section label, or in the key or value of a configuration variable:
     # Valid comment
     [ # Not a comment, just a weird section label ]
 
-    # Valid comment
-    key: value  # Not a comment, just part of the value
+    ; Valid comment
+    key: value  ; Not a comment, just part of the value
 
 
 =head3 Sections
@@ -811,6 +834,20 @@ loading it with the appropriate options:
 
     update_ini(%config_hash);
 
+You can also control how much spacing the module puts between single-
+line values when they are first written to a file, by using the
+C<def_gap> option:
+
+    # No empty line between single-line config values...
+    use Config::Std { def_gap => 0 }; 
+
+    # An empty line between all single-line config values...
+    use Config::Std { def_gap => 1 }; 
+
+Regardless of the value passed for C<def_gap>, new multi-line values are
+always written with an empty line above and below them. Likewise, values
+that were previously read in from a file are always written back with
+whatever spacing they originally had.
 
 =head1 DIAGNOSTICS
 

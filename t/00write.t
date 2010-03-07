@@ -9,6 +9,8 @@ my %data = (
         'def1'     => 'def val 1',
         'def 2'    => 'def val 2',
         'def 3 ml' => "def val 3\nacross several\n   lines",
+        'def 3'    => 'def val 3',
+        'def 4'    => 'def val 4',
     },
 
     # Named section...
@@ -37,18 +39,19 @@ is $orig_config, $config                         => 'Content correct';
 
 __DATA__
 
+def 3: def val 3
 def 2: def val 2
 
 def 3 ml: def val 3
         : across several
         :    lines
 
+def 4: def val 4
 def1: def val 1
 
 [Complex named!!!]
 
 %^$%$#%: curses
-
 123456789: zero
 
 [Named]

@@ -9,6 +9,8 @@ my %data = (
         'def1'     => 'def val 1',
         'def 2'    => 'def val 2',
         'def 3 ml' => "def val 3\nacross several\n   lines",
+        'def 3'    => 'def val 3',
+        'def 4'    => 'def val 4',
     },
 
     # Named section...
