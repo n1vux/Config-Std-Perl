@@ -48,3 +48,8 @@ Revision history for Config-Std
     - Fixed bug in section heading parsing (thanks Kirk)
 
 
+
+
+0.007  Wed Nov 18 13:21:08 2009
+
+    - Fixed major bug in gap algorithm for new keys (thanks Jojo!)

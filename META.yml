@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Config-Std
-version:             0.0.5
+version:             0.007
 abstract:            Load and save configuration files in a standard format
 license:             ~
 author:              

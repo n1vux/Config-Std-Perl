@@ -1,6 +1,6 @@
 package Config::Std;
 
-use version; our $VERSION = qv('0.0.5');
+our $VERSION = '0.007';
 
 my %global_def_sep;
 my %global_inter_gap;
@@ -217,11 +217,12 @@ use Class::Std;
 
         my $first = 1;
         for my $key ( grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
+            my $value = $hash_ref->{$key};
             my $separate = ref $value || $value =~ m/\n./xms;
-            $block->ensure_gap() if ($first ? $post_gap : $inter_gap)
+            $self->ensure_gap() if ($first ? $post_gap : $inter_gap)
                                     || $separate;
             $self->add_keyval($key, undef, $hash_ref->{$key});
-            $block->add_gap() if $separate;
+            $self->add_gap() if $separate;
             $first = 0;
         }
     }
@@ -492,7 +493,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.0.5
+This document describes Config::Std version 0.007
 
 
 =head1 SYNOPSIS
