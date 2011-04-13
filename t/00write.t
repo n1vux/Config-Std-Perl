@@ -1,6 +1,9 @@
 use Config::Std;
 use Test::More 'no_plan';
 
+# May fail with v5.8.1 only, 
+# if so define PERL_HASH_SEED=0 to suppress Hash Randomisation
+
 my $output_file = 'test.cfg';
 
 my %data = (

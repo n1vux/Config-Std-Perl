@@ -16,3 +16,4 @@ t/02rewrite_eq.t
 t/03autoviv.t
 t/comments.t
 t/undef.t
+LICENSE

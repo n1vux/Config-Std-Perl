@@ -1,6 +1,8 @@
 package Config::Std;
 
-our $VERSION = '0.007';
+our $VERSION = '0.900';
+
+require v5.7.3; # RT#21184
 
 my %global_def_sep;
 my %global_inter_gap;
@@ -273,6 +275,7 @@ use Class::Std;
 package Config::Std::Hash;
 use Class::Std;
 {
+
     use Carp;
     use Fcntl ':flock';     # import LOCK_* constants
 
@@ -493,7 +496,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.007
+This document describes Config::Std version 0.900
 
 
 =head1 SYNOPSIS
@@ -524,8 +527,16 @@ The configuration language is deliberately simple and limited, and the
 module works hard to preserve as much information (section order,
 comments, etc.) as possible when a configuration file is updated.
 
-See Chapter 19 of "Perl Best Practices" (O'Reilly, 2005) for the
-rationale for this approach.
+The whole point of Config::Std is to encourage use of one standard layout
+and syntax in config files. Damian says "I could have gotten away with it, I would have
+only allowed one separator. But it proved impossible to choose between C<:> and C<=>
+(half the people I asked wanted one, half wanted the other)." 
+Providing round-trip file re-write is the spoonful of sugar to help the medicine go down.
+The supported syntax is within the general INI file family 
+
+See Chapter 19 of "Perl Best Practices" (O'Reilly, 2005) 
+for more detail on the
+rationale for this approach. 
 
 =head2 Configuration language
 
@@ -549,6 +560,8 @@ a section label, or in the key or value of a configuration variable:
     ; Valid comment
     key: value  ; Not a comment, just part of the value
 
+NOTE BENE -- that last is a BAD EXAMPLE of what is NOT supported. 
+This module supports full-line comments only, not on same line with semantic content.
 
 =head3 Sections
 
@@ -610,10 +623,16 @@ be used as part of a key. Newlines are not allowed in keys either.
 
 When writing out a config file, Config::Std tries to preserve whichever
 separator was used in the original data (if that data was read
-in). New data is written back with a colon as its default separator,
-unless you specify otherwise when the module is loaded:
+in). New data 
+(created by code not parsed by C<read_config>)
+is written back with a colon as its default separator,
+unless you specify the only other separator value C<'='> when the module is loaded:
 
     use Config::Std { def_sep => '=' };
+
+Note that this does not change read-in parsing, 
+does not change punctuation for values that were parsed, 
+and will not allow values other than C<'='> or C<':'>.
 
 Everything from the first non-whitespace character after the separator,
 up to the end of the line, is treated as the value for the config variable.
@@ -779,6 +798,8 @@ loaded...
 
 =item C<< read_config($filename => $config_hash_ref) >>
 
+=item C<< read_config($string_ref => %config_hash_or_ref) >>
+
 The C<read_config()> subroutine takes two arguments: the filename of a
 configuration file, and a variable into which the contents of that
 configuration file are to be loaded.
@@ -791,6 +812,28 @@ anonymous hash is first assigned to that scalar, and that hash is then
 filled as described above.
 
 The subroutine returns true on success, and throws an exception on failure.
+
+If you pass a reference to the string as the first argument to
+C<read_config()> it uses that string as the source of the config info.
+For example:
+
+	use Config::Std;
+
+	# here we load the config text to a scalar
+	my $cfg = q{
+	[Section 1]
+	attr1 = at
+	attr2 = bat
+
+	[Section 2]
+	attr3 = cat
+	};
+
+	# here we parse the config from that scalar by passing a reference to it.
+	read_config( \$cfg, my %config );
+
+	use Data::Dumper 'Dumper';
+	warn Dumper [ \%config ];
 
 
 =item C<< write_config(%config_hash => $filename) >>
@@ -910,6 +953,7 @@ using the file.
 =head1 CONFIGURATION AND ENVIRONMENT
 
 Config::Std requires no configuration files or environment variables.
+(To do so would be disturbingly recursive.)
 
 
 =head1 DEPENDENCIES
@@ -919,12 +963,49 @@ This module requires the Class::Std module (available from the CPAN)
 
 =head1 INCOMPATIBILITIES
 
-None reported.
+Those variants of INI file dialect supporting partial-line comment are incompatible. 
+(This is the price of keeping comments when re-writing.)
 
 
 =head1 BUGS AND LIMITATIONS
 
-No bugs have been reported.
+=over
+
+=item Loading on demand
+
+If you attempt to load C<read_config()> and C<write_config()> 
+at runtime with C<require>, you can not rely upon the prototype
+to convert a regular hash to a reference. To work around this, 
+you must explicitly pass a reference to the config hash.
+
+    require Config::Std;
+    Config::Std->import;
+
+    my %config;
+    read_config($file, \%config);
+    write_config(\%config, $file);
+
+=item Windows line endings on Unix/Linux (RT#21547/23550)
+
+If the config file being read contains carriage returns and line feeds
+at the end of each line rather than just line feeds (i.e. the standard
+Windows file format, when read on a machine expecting POSIX file format),
+Config::Std emits an error with embedded newline.
+
+Workaround is match file line-endings to locale.
+
+This will be fixed in 1.000.
+
+
+=item leading comment vanishes (RT#24597,)
+
+A comment before the first section is not always retained on write-back, if the '' default section is empty.
+
+=item 00write.t test 5 fails on perl5.8.1 (RT#17425)
+
+Due to an incompatible change in v5.8.1 partially reversed in v5.8.2, hash key randomisation can cause test to fail in that one version of Perl. Workaround is export environment variable PERL_HASH_SEED=0.
+
+=back
 
 Please report any bugs or feature requests to
 C<bug-config-std@rt.cpan.org>, or through the web interface at
@@ -934,11 +1015,14 @@ L<http://rt.cpan.org>.
 =head1 AUTHOR
 
 Damian Conway  C<< <DCONWAY@cpan.org> >>
-
+Maintainers 
+Bill Ricker    C<< <BRICKER@cpan.org> >>
+Tom Metro      C<< <tmetro@cpan.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>. All rights reserved.
+Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>. 
+Copyright (c) 2011, D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
