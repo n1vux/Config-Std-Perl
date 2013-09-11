@@ -42,8 +42,8 @@ is $orig_config, $config                         => 'Content correct';
 
 __DATA__
 
-def 3: def val 3
 def 2: def val 2
+def 3: def val 3
 
 def 3 ml: def val 3
         : across several

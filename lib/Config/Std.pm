@@ -1,6 +1,6 @@
 package Config::Std;
 
-our $VERSION = '0.900';
+our $VERSION = '0.901';
 
 require v5.7.3; # RT#21184
 
@@ -218,7 +218,8 @@ use Class::Std;
         return unless $is_first{ident $self};
 
         my $first = 1;
-        for my $key ( grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
+	# RT 85956 
+        for my $key ( sort grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
             my $value = $hash_ref->{$key};
             my $separate = ref $value || $value =~ m/\n./xms;
             $self->ensure_gap() if ($first ? $post_gap : $inter_gap)
@@ -323,7 +324,8 @@ use Class::Std;
             my $block = Config::Std::Block->new({name=>$block_name});
             my $subhash = $hash_ref->{$block_name};
             my $first = 1;
-            for my $key ( keys %{$subhash} ) {
+	    # RT 85956
+            for my $key ( sort keys %{$subhash} ) {
                 if (!defined $subhash->{$key}) {
                     croak "Can't save undefined value for key {'$block_name'}{'$key'} (only scalars or array refs)";
                 }
@@ -496,7 +498,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.900
+This document describes Config::Std version 0.901
 
 
 =head1 SYNOPSIS

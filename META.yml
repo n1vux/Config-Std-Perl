@@ -15,7 +15,7 @@ name: Config-Std
 provides:
   Config::Std:
     file: lib/Config/Std.pm
-    version: 0.900
+    version: 0.901
   Config::Std::Block:
     file: lib/Config/Std.pm
   Config::Std::Comment:
@@ -36,4 +36,4 @@ requires:
   version: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.900
+version: 0.901

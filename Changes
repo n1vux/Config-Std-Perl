@@ -1,6 +1,11 @@
 Revision history for Config-Std
 
-0.9   Tue Apr 12 20:41:04 2011
+0.901  Tue Sep 10, 2013
+    - Copyright, added co-maintainers
+    * RT 85956 - 5.18 Hash ordering randomization hit the tests.
+      Thanks to Gregor on Debian for report and Zefram for patch.
+
+0.900   Tue Apr 12 20:41:04 2011
     - Change of Maintainers.
     - Reordered Changes to latest first.
     - Module::Build::Compat creating Makefile.PL traditional
