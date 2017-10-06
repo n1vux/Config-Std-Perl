@@ -100,7 +100,7 @@ use Class::Std;
         return $serialization;
     }
 
-    sub update { 
+    sub update {
         my ($self, $hash_ref, $updated_ref) = @_;
         my $ident = ident $self;
 
@@ -221,7 +221,7 @@ use Class::Std;
         return unless $is_first{ident $self};
 
         my $first = 1;
-	# RT 85956 
+	# RT 85956
         for my $key ( sort grep {!$updated_ref->{$_}} keys %{$hash_ref}) {
             my $value = $hash_ref->{$key};
             my $separate = ref $value || $value =~ m/\n./xms;
@@ -269,7 +269,7 @@ use Class::Std;
             return;
         }
 
-        my $keyval 
+        my $keyval
             = Config::Std::Keyval->new({key=>$key, sep=>$sep, val=>$val, comm=>$comm});
         push @{$components_of{$ident}}, $keyval;
         $seen->{$key} = $keyval;
@@ -488,6 +488,13 @@ use Class::Std;
         return \@config_file;
     }
 
+    sub DEMOLISH {
+        my ($self, $ident) = @_;
+
+        # Do nothing. Defined to suppress use warnings in Class::Std destructor.
+    }
+
+
 }
 
 
@@ -523,7 +530,7 @@ This document describes Config::Std version 0.901
     # Write the config information to another file as well...
     write_config %config, $other_file_name;
 
-  
+
 =head1 DESCRIPTION
 
 This module implements yet another damn configuration-file system.
@@ -535,13 +542,13 @@ comments, etc.) as possible when a configuration file is updated.
 The whole point of Config::Std is to encourage use of one standard layout
 and syntax in config files. Damian says "I could have gotten away with it, I would have
 only allowed one separator. But it proved impossible to choose between C<:> and C<=>
-(half the people I asked wanted one, half wanted the other)." 
+(half the people I asked wanted one, half wanted the other)."
 Providing round-trip file re-write is the spoonful of sugar to help the medicine go down.
-The supported syntax is within the general INI file family 
+The supported syntax is within the general INI file family
 
-See Chapter 19 of "Perl Best Practices" (O'Reilly, 2005) 
+See Chapter 19 of "Perl Best Practices" (O'Reilly, 2005)
 for more detail on the
-rationale for this approach. 
+rationale for this approach.
 
 =head2 Configuration language
 
@@ -565,7 +572,7 @@ a section label, or in the key or value of a configuration variable:
     ; Valid comment
     key: value  ; Not a comment, just part of the value
 
-NOTE BENE -- that last is a BAD EXAMPLE of what is NOT supported. 
+NOTE BENE -- that last is a BAD EXAMPLE of what is NOT supported.
 This module supports full-line comments only, not on same line with semantic content.
 
 =head3 Sections
@@ -628,15 +635,15 @@ be used as part of a key. Newlines are not allowed in keys either.
 
 When writing out a config file, Config::Std tries to preserve whichever
 separator was used in the original data (if that data was read
-in). New data 
+in). New data
 (created by code not parsed by C<read_config>)
 is written back with a colon as its default separator,
 unless you specify the only other separator value C<'='> when the module is loaded:
 
     use Config::Std { def_sep => '=' };
 
-Note that this does not change read-in parsing, 
-does not change punctuation for values that were parsed, 
+Note that this does not change read-in parsing,
+does not change punctuation for values that were parsed,
 and will not allow values other than C<'='> or C<':'>.
 
 Everything from the first non-whitespace character after the separator,
@@ -669,7 +676,7 @@ You can comment a config var on the preceding or succeeding line:
 
     # Use octothorpe/newline to delimit comments
     comment delims:  # \n
-    
+
 
 =head3 Multi-line configuration values
 
@@ -792,12 +799,12 @@ would be read into a hash whose internal structure looked like this:
     }
 
 
-=head1 INTERFACE 
+=head1 INTERFACE
 
 The following subroutines are exported automatically whenever the module is
 loaded...
 
-=over 
+=over
 
 =item C<< read_config($filename => %config_hash) >>
 
@@ -888,10 +895,10 @@ line values when they are first written to a file, by using the
 C<def_gap> option:
 
     # No empty line between single-line config values...
-    use Config::Std { def_gap => 0 }; 
+    use Config::Std { def_gap => 0 };
 
     # An empty line between all single-line config values...
-    use Config::Std { def_gap => 1 }; 
+    use Config::Std { def_gap => 1 };
 
 Regardless of the value passed for C<def_gap>, new multi-line values are
 always written with an empty line above and below them. Likewise, values
@@ -900,12 +907,12 @@ whatever spacing they originally had.
 
 =head1 DIAGNOSTICS
 
-=over 
+=over
 
 =item Can't open config file '%s' (%s)
 
 You tried to read in a configuration file, but the file you specified
-didn't exist. Perhaps the filepath you specified was wrong. Or maybe 
+didn't exist. Perhaps the filepath you specified was wrong. Or maybe
 your application didn't have permission to access the file you specified.
 
 =item Can't read from locked config file '$filename'
@@ -968,7 +975,7 @@ This module requires the Class::Std module (available from the CPAN)
 
 =head1 INCOMPATIBILITIES
 
-Those variants of INI file dialect supporting partial-line comment are incompatible. 
+Those variants of INI file dialect supporting partial-line comment are incompatible.
 (This is the price of keeping comments when re-writing.)
 
 
@@ -978,9 +985,9 @@ Those variants of INI file dialect supporting partial-line comment are incompati
 
 =item Loading on demand
 
-If you attempt to load C<read_config()> and C<write_config()> 
+If you attempt to load C<read_config()> and C<write_config()>
 at runtime with C<require>, you can not rely upon the prototype
-to convert a regular hash to a reference. To work around this, 
+to convert a regular hash to a reference. To work around this,
 you must explicitly pass a reference to the config hash.
 
     require Config::Std;
@@ -1017,13 +1024,13 @@ L<http://rt.cpan.org>.
 =head1 AUTHOR
 
 Damian Conway  C<< <DCONWAY@cpan.org> >>
-Maintainers 
+Maintainers
 Bill Ricker    C<< <BRICKER@cpan.org> >>
 Tom Metro      C<< <tmetro@cpan.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>. 
+Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>.
 Copyright (c) 2011,2014,2017, D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
 
 This module is free software; you can redistribute it and/or
