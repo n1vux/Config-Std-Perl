@@ -3,15 +3,15 @@ require 5.007003;
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
-  'INSTALLDIRS' => 'site',
   'PL_FILES' => {},
-  'VERSION_FROM' => 'lib/Config/Std.pm',
   'PREREQ_PM' => {
-                   'version' => 0,
+                   'Test::More' => 0,
                    'Class::Std' => 0,
-                   'Test::More' => 0
+                   'version' => 0
                  },
-  'EXE_FILES' => [],
-  'NAME' => 'Config::Std'
+  'VERSION_FROM' => 'lib/Config/Std.pm',
+  'INSTALLDIRS' => 'site',
+  'NAME' => 'Config::Std',
+  'EXE_FILES' => []
 )
 ;
