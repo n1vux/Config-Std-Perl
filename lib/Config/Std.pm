@@ -1,8 +1,10 @@
 package Config::Std;
 
-our $VERSION = '0.902';
+our $VERSION = '0.903';
 
-require v5.7.3; # RT#21184
+use 5.007_003; # Testing with 5.8.1 since that's cpanm minimum :-)
+use strict;
+use warnings;
 
 my %global_def_sep;
 my %global_inter_gap;
@@ -15,6 +17,7 @@ sub import {
     for my $sub_name (qw( read_config write_config )) {
         $opt_ref->{$sub_name} ||= $sub_name;
     }
+    no strict "refs";
     *{$caller.'::'.$opt_ref->{read_config}}  = \&Config::Std::Hash::read_config;
     *{$caller.'::'.$opt_ref->{write_config}} = \&Config::Std::Hash::write_config;
 }
@@ -77,7 +80,7 @@ use Class::Std;
 
         my $serialization = q{};
 
-        for $n (0..$#{$vals}) {
+        for my $n (0..$#{$vals}) {
             my ($val,$sep,$comm) = @{$vals->[$n]}{qw(val sep comm)};
 
             my $val_type = ref $val;
@@ -108,7 +111,7 @@ use Class::Std;
         }
         else {
             my $val = $hash_ref->{$key};
-            @newvals = ref $val eq 'ARRAY' ? @{$val} : $val;
+            my @newvals = ref $val eq 'ARRAY' ? @{$val} : $val;
             for my $n (0..$#newvals) {
                 $vals_of{$ident}[$n]{val} = $newvals[$n];
             }
@@ -315,7 +318,7 @@ use Class::Std;
         for my $block ( @{$array_rep_for{$hash_ref}} ) {
             my $block_name = $block->get_name();
             $block->extend($hash_ref->{$block_name}, $updated{$block_name},
-                           $post_gap, inter_gap
+                           $post_gap, $inter_gap
                           );
         }
 
@@ -1003,9 +1006,6 @@ This will be fixed in 1.000.
 
 A comment before the first section is not always retained on write-back, if the '' default section is empty.
 
-=item 00write.t test 5 fails on perl5.8.1 (RT#17425)
-
-Due to an incompatible change in v5.8.1 partially reversed in v5.8.2, hash key randomisation can cause test to fail in that one version of Perl. Workaround is export environment variable PERL_HASH_SEED=0.
 
 =back
 
@@ -1024,7 +1024,7 @@ Tom Metro      C<< <tmetro@cpan.org> >>
 =head1 LICENCE AND COPYRIGHT
 
 Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>. 
-Copyright (c) 2011, D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
+Copyright (c) 2011,2014,2017, D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
