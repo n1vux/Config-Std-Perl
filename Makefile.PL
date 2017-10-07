@@ -10,6 +10,9 @@ WriteMakefile
                    'version' => 0
                  },
   'VERSION_FROM' => 'lib/Config/Std.pm',
+  'TEST_REQUIRES' => {
+                'TAP::Harness' => 3.31,  # you can use older but must set HARNESS_OPTIONS=j1 if threaded
+                },
   'INSTALLDIRS' => 'site',
   'NAME' => 'Config::Std',
   'EXE_FILES' => []

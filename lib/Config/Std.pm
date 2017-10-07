@@ -983,6 +983,22 @@ Those variants of INI file dialect supporting partial-line comment are incompati
 
 =over
 
+=item Memory leak re-reading
+
+A daemon re-reading its config file has reported a memory leak.
+
+=item Parallel testing not safe
+
+This is a config file module. Tests written before C<TAP> got parallel
+testing are unsafe with parallel testing, surprise!
+Settings are now included to force serial testing (until we refactor all tests
+to use temp dirs?).
+
+If using an older Perl < 5.21.1, and Module.PL, and getting out-of-sequence test failures installing this module, either
+update Test::Harness~'>= 3.31'
+or export HARNESS_OPTIONS=j1
+(or force/no-test, or use Build.PL and/or perl-5.22.0 or newer instead).
+
 =item Loading on demand
 
 If you attempt to load C<read_config()> and C<write_config()>

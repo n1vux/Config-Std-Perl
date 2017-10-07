@@ -1,3 +1,4 @@
+use 5.007_003;
 use strict;
 use warnings;
 use Module::Build '0.19';
@@ -32,6 +33,12 @@ my $builder = Module::Build->new(
     },
     add_to_cleanup      => [ 'Config-Std-*' ],
     create_makefile_pl => 'traditional', # Module::Build::Compat
+    use_tap_harness    => 1,
+    tap_harness_args   => {
+        jobs => 1, # Config file tests are setup & sequenced
+        # default rulesfile=t/testrules.yml has belt and suspenders
+      }
+
 );
 
 $builder->create_build_script();

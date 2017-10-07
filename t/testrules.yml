@@ -1,6 +1,2 @@
-# this module uses config files, so tests are inherently sequential
-seq:
-    # tests that are known parallel-ready
-    - par: t/par*.t
-        # wildcard for everything else  (will run in isolation)
-    - seq: **
+---
+seq: t/*.t
