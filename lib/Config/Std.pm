@@ -508,7 +508,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.901
+This document describes Config::Std version 0.903
 
 
 =head1 SYNOPSIS
