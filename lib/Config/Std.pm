@@ -747,7 +747,7 @@ C<S<["Moe\n(the bartender)", "Smithers\n(the dogsbody)"]>>
 
 =head2 Internal representation
 
-Each section label in a configuration file becomes a top-level hash key whe
+Each section label in a configuration file becomes a top-level hash key when
 the configuration file is read in. The corresponding value is a nested hash
 reference.
 
