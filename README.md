@@ -1,6 +1,6 @@
 # Build status of dev branch
 
-* Linux [![Build Status](https://travis-ci.org/n1vux/Config-Std-Perl.svg?branch=dev)](https://travis-ci.org/n1vux/Config-Std-Perl.svg?branch=dev)
+* Linux [![Build Status](https://travis-ci.org/n1vux/Config-Std-Perl.png?branch=dev)](https://travis-ci.org/n1vux/Config-Std-Perl)
 * Windows [![Build Status](https://ci.appveyor.com/api/projects/status/github/n1vux/config-std-perl)](https://ci.appveyor.com/project/n1vux/config-std-perl)
 
 # Config::Std
