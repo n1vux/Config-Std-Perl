@@ -1,6 +1,6 @@
 package Config::Std;
 
-our $VERSION = '0.903';
+our $VERSION = '0.904';
 
 use 5.007_003; # Testing with 5.8.1 since that's cpanm minimum :-)
 use strict;
@@ -10,16 +10,32 @@ my %global_def_sep;
 my %global_inter_gap;
 
 sub import {
-    my ($package, $opt_ref) = @_;
+    use List::Util qw[first];
+    my ($package, @args) = @_;
+    my $opt_ref = ( first { ref $_ } @args )
+                || {} ;
+    @args = grep { ! ref $_ } @args;
+    @args = (qw( read_config write_config ))
+        unless @args;
+    ### DEBUG # uncomment if curious 
+    # use Data::Dumper;
+    # warn Data::Dumper->Dump([ \@args, $opt_ref ], [ qw(args opts )] );
+    ######
+
     my $caller = caller();
     $global_def_sep{$caller} = $opt_ref->{def_sep};
     $global_inter_gap{$caller} = $opt_ref->{def_gap};
-    for my $sub_name (qw( read_config write_config )) {
+    for my $sub_name (@args) {
         $opt_ref->{$sub_name} ||= $sub_name;
     }
+    ### DEBUG
+    # warn Data::Dumper->Dump([ \@args, $opt_ref ], [ qw(args opts )] );
+    ######
     no strict "refs";
-    *{$caller.'::'.$opt_ref->{read_config}}  = \&Config::Std::Hash::read_config;
-    *{$caller.'::'.$opt_ref->{write_config}} = \&Config::Std::Hash::write_config;
+    *{$caller.'::'.$opt_ref->{read_config}}  = \&Config::Std::Hash::read_config
+        if $opt_ref->{read_config};
+    *{$caller.'::'.$opt_ref->{write_config}} = \&Config::Std::Hash::write_config
+        if $opt_ref->{write_config};
 }
 
 package Config::Std::Gap;
@@ -508,7 +524,7 @@ Config::Std - Load and save configuration files in a standard format
 
 =head1 VERSION
 
-This document describes Config::Std version 0.903
+This document describes Config::Std version 0.904
 
 
 =head1 SYNOPSIS
@@ -802,7 +818,7 @@ would be read into a hash whose internal structure looked like this:
 =head1 INTERFACE
 
 The following subroutines are exported automatically whenever the module is
-loaded...
+loaded (unless specified otherwise) ...
 
 =over
 
@@ -889,6 +905,19 @@ loading it with the appropriate options:
     # and later still...
 
     update_ini(%config_hash);
+
+As of version 0.904, the module will accept standard import list to import only one of the two functions,
+e.g. to declare and enforce intent to be read-only or write only.
+
+    use Config::Std qw(read_config)
+
+    use Config::Std q(read_config), { read_config => 'get_ini', def_sep => '=' };
+
+Note that renaming only one of the two is inadequate to prevent both being exported 
+(or imported from your point of view):
+
+    use Config::Std { read_config => 'get_ini', def_sep => '=' };
+    # will import get_init and write_config
 
 You can also control how much spacing the module puts between single-
 line values when they are first written to a file, by using the
