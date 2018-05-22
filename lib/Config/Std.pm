@@ -1076,7 +1076,7 @@ Tom Metro      C<< <tmetro@cpan.org> >>
 =head1 LICENCE AND COPYRIGHT
 
 Copyright (c) 2005, Damian Conway C<< <DCONWAY@cpan.org> >>.
-Copyright (c) 2011,2014,2017, D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
+Copyright (c) 2011,2014,2017,2018 D.Conway, W.Ricker C<< <BRICKER@cpan.org> >> All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

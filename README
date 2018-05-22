@@ -1,4 +1,4 @@
-Config::Std version 0.903
+Config::Std version 0.904
 
 This module implements yet another damn configuration-file system.
 
@@ -34,10 +34,10 @@ DEPENDENCIES
 None.
 
 
-COPYRIGHT AND LICENCE
+COPYRIGHT AND LICENSE
 
 Copyright (C) 2005, Damian Conway; 
-Copyright (C) 2011,2013,2017 William Ricker + Tom Metro, maintainers for Boston.PM
+Copyright (C) 2011,2013,2017,2018 William Ricker + Tom Metro, maintainers for Boston.PM
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
