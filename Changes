@@ -1,5 +1,9 @@
 Revision history for Config-Std
 
+0.904 TBD
+   -  123304 :  'use' to import only one function now works - thanks to Kenneth for the idea
+   - ....
+
 0.903 Fri Oct 6, 2017
    -  general Kwallitee cleanup
    -  warnings cleanup
