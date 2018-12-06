@@ -16,5 +16,8 @@ t/02rewrite_eq.t
 t/03autoviv.t
 t/comments.t
 t/undef.t
+t/01distribution.t
+t/01.load-import-option.t
+t/01.load-import.t
 LICENSE
 META.json
