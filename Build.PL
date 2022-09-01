@@ -17,7 +17,7 @@ my $builder = Module::Build->new(
         'Test::More' => 0,
         'Class::Std' => 0,
         'version'    => 0,
-        'perl'       => '5.7.3',
+        'perl'       => 5.007_003,  # '5.7.3',
 
     },
 
@@ -32,7 +32,7 @@ my $builder = Module::Build->new(
         }
     },
     add_to_cleanup      => [ 'Config-Std-*' ],
-    create_makefile_pl => 'traditional', # Module::Build::Compat
+    create_makefile_pl => 'small', # Module::Build::Compat
     use_tap_harness    => 1,
     tap_harness_args   => {
         jobs => 1, # Config file tests are setup & sequenced

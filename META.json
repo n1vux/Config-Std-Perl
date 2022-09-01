@@ -6,13 +6,13 @@
       "Tom Metro <tmetro@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4224",
+   "generated_by" : "Module::Build version 0.4231",
    "license" : [
       "perl_5"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "Config-Std",
    "prereqs" : {
@@ -29,7 +29,7 @@
          "requires" : {
             "Class::Std" : "0",
             "Test::More" : "0",
-            "perl" : "v5.7.3",
+            "perl" : "5.007003",
             "version" : "0"
          }
       }
@@ -37,7 +37,7 @@
    "provides" : {
       "Config::Std" : {
          "file" : "lib/Config/Std.pm",
-         "version" : "0.903"
+         "version" : "0.904"
       },
       "Config::Std::Block" : {
          "file" : "lib/Config/Std.pm"
@@ -64,6 +64,6 @@
          "url" : "https://github.com/n1vux/Config-Std-Perl"
       }
    },
-   "version" : "0.903",
-   "x_serialization_backend" : "JSON::PP version 2.27400_02"
+   "version" : "0.904",
+   "x_serialization_backend" : "JSON::PP version 4.09"
 }
